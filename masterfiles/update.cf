@@ -10,11 +10,11 @@ body common control
                           "update_def",
                           "cfe_internal_dc_workflow",
                           "cfe_internal_update_policy",
+                          "cfe_internal_update_bins",
                           "cfe_internal_update_processes",
-                          "cfe_internal_update_bins"
       };
 
-      version => "update.cf 3.6.0";
+      version => "update.cf 3.6.1";
 
       inputs => {
                   "update/update_bins.cf",
@@ -42,7 +42,7 @@ body agent control
 bundle common update_def
 {
   vars:
-      "input_name_patterns" slist => { ".*.cf",".*.dat",".*.txt", ".*.conf", ".*.mustache",
+      "input_name_patterns" slist => { ".*\.cf",".*\.dat",".*\.txt", ".*\.conf", ".*\.mustache",
                                        "cf_promises_release_id" },
       comment => "Filename patterns to match when updating the policy (see update/update_policy.cf)",
       handle => "common_def_vars_input_name_patterns";
@@ -77,6 +77,12 @@ bundle common update_def
 
   classes:
 
+      # Trigger binary upgrade from policy hub
+      # Disable by default
+      "trigger_upgrade" or => {
+                               "!any",
+                              };
+
       # Update masterfiles from Git
       # Enabled for enterprise users by default
       # you can also request it from the command line with
@@ -109,4 +115,5 @@ body classes u_kept_successful_command
 # @brief Set command to "kept" instead of "repaired" if it returns 0
 {
       kept_returncodes => { "0" };
+      failed_returncodes => { "1" };
 }

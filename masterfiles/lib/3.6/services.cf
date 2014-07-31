@@ -51,7 +51,8 @@ bundle common services_common
 # @ignore
 {
   vars:
-      "inputs" slist => { "$(this.promise_dirname)/paths.cf" };
+      "inputs" slist => { "$(this.promise_dirname)/common.cf",
+                          "$(this.promise_dirname)/paths.cf" };
 }
 
 body file control
@@ -134,7 +135,7 @@ bundle agent standard_services(service,state)
 # ```
 {
   vars:
-      "call_systemctl" string => "$(paths.sysctl) --no-ask-password --global --system";
+      "call_systemctl" string => "$(paths.systemctl) --no-ask-password --global --system";
       "init" string => "/etc/init.d/$(service)";
 
     start|restart|reload::
@@ -178,7 +179,7 @@ bundle agent standard_services(service,state)
       classes => kept_successful_command;
 
     chkconfig.stop.onboot::
-      # Only chkconfig enable if it's currently set to start on boot
+      # Only chkconfig disable if it's currently set to start on boot
       "$(paths.chkconfig) $(service) $(chkconfig_mode)"
       classes => kept_successful_command,
       contain => silent;

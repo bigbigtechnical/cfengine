@@ -147,12 +147,16 @@ bundle common redhat_knowledge
       "yum_options" string => ifelse("redhat_4", "",
                                      "--quiet");
 
-      # yum check-update prints a lot of extra useless lines, but the package
-      # names we're interested in always contain a '.' followed by an
-      # architecture, so let's make sure of that when we match.
-      "patch_name_regex" string    => "^(\S+)\.[^.]+\s.*";
-      "patch_version_regex" string => "^\S+\.[^.]+\s+(\S+).*";
-      "patch_arch_regex" string    => "^\S+\.([^.]+)\s.*";
+      # yum check-update prints a lot of extra useless lines, but the format of
+      # the actual package lines is:
+      #
+      #   <name>.<arch>    <version>    <repo>
+      #
+      # We try to match that format as closely as possible, so we reject
+      # possibly interspersed error messages.
+      "patch_name_regex" string    => "^(\S+)\.[^\s.]+\s+\S+\s+\S+\s*$";
+      "patch_version_regex" string => "^\S+\.[^\s.]+\s+(\S+)\s+\S+\s*$";
+      "patch_arch_regex" string    => "^\S+\.([^\s.]+)\s+\S+\s+\S+\s*$";
 
       # Combine multiline entries into one line. A line without at least three
       # fields gets combined with the next line, if that line starts with a
@@ -298,9 +302,9 @@ body package_method pip(flags)
 
       package_list_update_ifelapsed => "$(common_knowledge.list_update_ifelapsed)";
 
-      package_list_name_regex    => "$(pip_list_name_regex)";
-      package_list_version_regex => "$(pip_list_version_regex)";
-      package_installed_regex    => "$(pip_installed_regex)";
+      package_list_name_regex    => "$(pip_knowledge.pip_list_name_regex)";
+      package_list_version_regex => "$(pip_knowledge.pip_list_version_regex)";
+      package_installed_regex    => "$(pip_knowledge.pip_installed_regex)";
 
       package_name_convention   => "$(name)";
       package_delete_convention => "$(name)";
@@ -854,6 +858,7 @@ body package_method yum
       package_patch_command  => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -907,6 +912,7 @@ body package_method yum_rpm
       package_patch_command  => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 body package_method yum_rpm_permissive
@@ -956,6 +962,7 @@ body package_method yum_rpm_permissive
       package_patch_command  => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -1004,6 +1011,7 @@ body package_method yum_rpm_enable_repo(repoid)
       package_patch_command => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --nodeps --allmatches";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -1123,6 +1131,7 @@ body package_method rpm_filebased(path)
 
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --allmatches";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -1197,7 +1206,11 @@ body package_method smartos
       package_add_command => "/opt/local/bin/pkgin -y install";
 
       package_delete_command => "/opt/local/bin/pkgin -y remove";
-      package_update_command =>  "/opt/local/bin/pkgin upgrade";
+      
+      # pkgin update doesn't do what you think it does. pkgin install against and
+      # already installed package will upgrade it however.
+      
+      package_update_command =>  "/opt/local/bin/pkgin -y install";
 }
 
 body package_method opencsw
@@ -1628,6 +1641,7 @@ body package_method generic
       package_patch_command  => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(rpm_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(rpm_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 
     debian::
       package_changes => "bulk";

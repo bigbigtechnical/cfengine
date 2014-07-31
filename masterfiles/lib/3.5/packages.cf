@@ -192,9 +192,9 @@ body package_method pip(flags)
 
       package_list_update_ifelapsed => "$(common_knowledge.list_update_ifelapsed)";
 
-      package_list_name_regex    => "$(pip_list_name_regex)";
-      package_list_version_regex => "$(pip_list_version_regex)";
-      package_installed_regex    => "$(pip_installed_regex)";
+      package_list_name_regex    => "$(pip_knowledge.pip_list_name_regex)";
+      package_list_version_regex => "$(pip_knowledge.pip_list_version_regex)";
+      package_installed_regex    => "$(pip_knowledge.pip_installed_regex)";
 
       package_name_convention   => "$(name)";
       package_delete_convention => "$(name)";
@@ -732,6 +732,7 @@ body package_method yum
       package_patch_command => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(redhat_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(redhat_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -785,6 +786,7 @@ body package_method yum_rpm
       package_patch_command  => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(redhat_knowledge.call_rpm) -e --nodeps";
       package_verify_command => "$(redhat_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -833,6 +835,7 @@ body package_method yum_rpm_enable_repo(repoid)
       package_patch_command => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(redhat_knowledge.call_rpm) -e --nodeps --allmatches";
       package_verify_command => "$(redhat_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -951,6 +954,7 @@ body package_method rpm_filebased(path)
 
       package_delete_command => "$(redhat_knowledge.call_rpm) -e --allmatches";
       package_verify_command => "$(redhat_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 }
 
 ##
@@ -1023,7 +1027,11 @@ body package_method smartos
       package_add_command => "/opt/local/bin/pkgin -y install";
 
       package_delete_command => "/opt/local/bin/pkgin -y remove";
-      package_update_command =>  "/opt/local/bin/pkgin upgrade";
+      
+      # pkgin update doesn't do what you think it does. pkgin install against and
+      # already installed package will upgrade it however.
+      
+      package_update_command =>  "/opt/local/bin/pkgin -y install";
 }
 
 # OpenCSW (Solaris software packages)
@@ -1394,6 +1402,7 @@ body package_method generic
       package_patch_command => "$(redhat_knowledge.call_yum) $(redhat_knowledge.yum_options) -y update";
       package_delete_command => "$(redhat_knowledge.call_rpm) -e --nodeps --allmatches";
       package_verify_command => "$(redhat_knowledge.call_rpm) -V";
+      package_noverify_returncode => "1";
 
     debian::
       package_changes => "bulk";
