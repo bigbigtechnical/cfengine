@@ -13,6 +13,7 @@ body common control
                           inventory_control,
                           @(inventory.bundles),
                           def,
+                          cfg,
                           cfe_internal_hub_vars,
 
                           # Design Center
@@ -21,6 +22,10 @@ body common control
                           # autorun system
                           services_autorun,
                           @(services_autorun.bundles),
+
+                          # BBT autorun system
+                          services_class_autorun,
+                          @(services_class_autorun.bundles),
 
                          # Agent bundle
                           cfe_internal_management,   # See cfe_internal/CFE_cfengine.cf
@@ -31,6 +36,7 @@ body common control
       inputs => {
                  # File definition for global variables and classes
                   "def.cf",
+                  "cfg.cf",
 
                 # Inventory policy
                   @(inventory.inputs),
@@ -56,6 +62,9 @@ body common control
                   # autorun system
                   @(services_autorun.inputs),
 
+                  # Class autorun system
+                  @(services_class_autorun.inputs),
+
                   # Add update files to build Knowledge Map relationship
                   "update/update_bins.cf",
                   "update/cfe_internal_dc_workflow.cf",
@@ -69,7 +78,7 @@ body common control
 
       };
 
-      version => "CFEngine Promises.cf 3.6.0";
+      version => "CFEngine Promises.cf 3.6.1-1";
 
       # Uncomment to connect to the hub using latest protocol.
       #protocol_version => "latest";
@@ -226,6 +235,24 @@ bundle common services_autorun
       "inputs" slist => { "services/autorun.cf" };
       "found_inputs" slist => lsdir("$(this.promise_dirname)/services/autorun", ".*\.cf", "true");
       "bundles" slist => { "autorun" }; # run loaded bundles
+
+  reports:
+    verbose_mode::
+      "$(this.bundle): defining inputs='$(inputs)'";
+}
+
+bundle common services_class_autorun
+{
+  vars:
+    cfengine_3_4||cfengine_3_5||!services_class_autorun::
+      "inputs" slist => { };
+      "found_inputs" slist => {};
+      "bundles" slist => { "services_class_autorun" }; # run self
+
+    !(cfengine_3_4||cfengine_3_5)::
+      "inputs" slist => { "services/class_autorun.cf" };
+      "found_inputs" slist => lsdir("$(this.promise_dirname)/services/autorun", ".*\.cf", "true");
+      "bundles" slist => { "class_autorun" }; # run loaded bundles
 
   reports:
     verbose_mode::

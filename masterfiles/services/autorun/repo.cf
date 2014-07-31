@@ -1,0 +1,50 @@
+bundle agent repo
+# This bundle is used to add repositories to a machine.
+{
+  meta:
+      "tags" slist => { "autorun" };
+
+  vars:
+      "jsonidx"
+        comment => "Indices of the JSON config file.",
+        handle  => "repo_vars_jsonidx",
+        policy  => "free",
+        slist   => getindices("cfg.json");
+
+      "repo_index_$(jsonidx)"
+        comment => "Information for repo for $(jsonidx)",
+        handle  => "repo_vars_index_$(jsonidx)",
+        policy  => "free",
+        slist   => getvalues("cfg.json[$(jsonidx)][repo]");
+
+      "repo_count_$(jsonidx)"
+        classes => default:if_ok("repo_exists_$(jsonidx)"),
+        comment => "Length of the repo info for $(jsonidx)",
+        handle  => "repo_vars_count_$(jsonidx)",
+        int     => length("cfg.json[$(jsonidx)][repo]"),
+        policy  => "free";
+
+      "repo_str_$(jsonidx)"
+        comment    => "JSON of the repo for $(jsonidx)",
+        handle     => "repo_vars_str_$(jsonidx)",
+        ifvarclass => canonify("repo_exists_$(jsonidx)"),
+        policy     => "free",
+        string     => format("%S", "cfg.json[$(jsonidx)][repo]");
+
+  files:
+    redhat::
+      "/etc/yum.repos.d/$(jsonidx).conf"
+        classes         => default:if_repaired("repo_added_$(jsonidx)"),
+        comment         => "File to hold the repo for $(jsonidx)",
+        create          => "true",
+        edit_template   => "/media/sf_bbt/repo/repo.mustache",
+        handle          => "repo_files_$(jsonidx)_conf",
+        ifvarclass      => canonify("repo_exists_$(jsonidx)"),
+        template_data   => parsejson('{"repo": $(repo_str_$(jsonidx))}'),
+        template_method => "mustache";
+
+  reports:
+    cfengine::
+      "Added repo file for $(jsonidx)"
+        ifvarclass => canonify("repo_added_$(jsonidx)");
+}

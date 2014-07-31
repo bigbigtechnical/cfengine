@@ -1,0 +1,45 @@
+bundle agent packages
+# This bundle is used to add packages to a machine.
+{
+  meta:
+      "tags" slist => { "autorun" };
+
+  vars:
+      "jsonidx"
+        comment => "Indices of the JSON config file.",
+        handle  => "packages_vars_jsonidx",
+        policy  => "free",
+        slist   => getindices("cfg.json");
+
+      "pkg_index[$(jsonidx)]"
+        comment => "Information for packages for $(jsonidx)",
+        handle  => "packages_vars_index_$(jsonidx)",
+        policy  => "free",
+        slist   => getvalues("cfg.json[$(jsonidx)][packages]");
+
+      "pkg_full_list"
+        comment => "Full list of the packages to install",
+        handle  => "packages_vars_full_list",
+        policy  => "free",
+        slist   => { getvalues("pkg_index") };
+
+      "pkg_list"
+        comment => "Unique list of the packages to install",
+        handle  => "packages_vars_list",
+        policy  => "free",
+        slist   => unique("pkg_full_list");
+
+  packages:
+    redhat::
+      "$(pkg_list)"
+        classes        => default:if_repaired("added_$(pkg_list)"),
+        comment        => "Deploying $(pkg_list)",
+        handle         => "packages_packages_$(pkg_list)",
+        package_method => default:yum,
+        package_policy => "add";
+
+  reports:
+    cfengine::
+      "Installing package $(pkg_list)."
+        ifvarclass => "added_$(pkg_list)";
+}

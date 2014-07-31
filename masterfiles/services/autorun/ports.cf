@@ -1,0 +1,82 @@
+bundle agent ports
+# This bundle is used to add ports to iptables.
+{
+  meta:
+      "tags" slist => { "autorun" };
+
+  vars:
+      "jsonidx"
+        comment => "Indices of the JSON config file.",
+        handle  => "ports_vars_jsonidx",
+        policy  => "free",
+        slist   => getindices("cfg.json");
+
+      "tcp_index[$(jsonidx)]"
+        comment => "TCP ports to open for each JSON file.",
+        handle  => "ports_vars_tcp_index_$(jsonidx)",
+        policy  => "free",
+        slist   => getvalues("cfg.json[$(jsonidx)][ports][tcp]");
+
+      "tcp_full_list"
+        comment => "List of all TCP ports to open.",
+        handle  => "ports_vars_tcp_full_list",
+        policy  => "free",
+        slist   => { getvalues("tcp_index") };
+
+      "tcp_list"
+        comment => "Unique list of TCP ports to open.",
+        handle  => "ports_vars_tcp_list",
+        policy  => "free",
+        slist   => unique("tcp_full_list");
+
+      "tcp_str"
+        comment => "String containing unique TCP ports.",
+        handle  => "ports_vars_tcp_str",
+        policy  => "free",
+        string  => join(",", tcp_list);
+
+      "udp_index[$(jsonidx)]"
+        comment => "UDP po`rts to open for each JSON file.",
+        handle  => "ports_vars_udp_index_$(jsonidx)",
+        policy  => "free",
+        slist   => getvalues("cfg.json[$(jsonidx)][ports][udp]");
+
+      "udp_full_list"
+        comment => "List of all UDP ports to open.",
+        handle  => "ports_vars_udp_full_list",
+        policy  => "free",
+        slist   => { getvalues("udp_index") };
+
+      "udp_list"
+        comment => "Unique list of UDP ports to open.",
+        handle  => "ports_vars_udp_list",
+        policy  => "free",
+        slist   => unique("udp_full_list");
+
+      "udp_str"
+        comment => "String containing unique UDP ports.",
+        handle  => "ports_vars_udp_str",
+        policy  => "free",
+        string => join(",", udp_list);
+
+  files:
+    redhat::
+      "/etc/sysconfig/iptables"
+        classes         => default:if_repaired("iptables_restart"),
+        comment         => "Edit the iptables file if necessary.",
+        create          => "true",
+        edit_template   => "$(sys.inputdir)/templates/iptables.mustache",
+        handle          => "ports_files_iptables",
+        template_method => "mustache",
+        template_data   => parsejson('{"tcp": [$(tcp_str)], "udp": [$(udp_str)]}');
+
+  commands:
+    iptables_restart::
+      "/etc/init.d/iptables restart"
+        comment    => "Restart the iptables service.",
+        handle     => "ports_commands_restart";      
+
+  reports:
+    iptables_restart::
+      "Change to iptables, restarting.";
+}

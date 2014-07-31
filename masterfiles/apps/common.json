@@ -1,0 +1,13 @@
+{
+  "common": {
+    "ports": {
+      "tcp": [22,5308]
+    },
+    "packages": [
+      "emacs",
+      "git",
+      "vim",
+      "wget"    
+    ]
+  }
+}

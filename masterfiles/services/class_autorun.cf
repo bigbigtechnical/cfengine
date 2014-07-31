@@ -1,0 +1,21 @@
+body file control
+{
+    inputs => { @(services_class_autorun.inputs) };
+}
+
+bundle agent class_autorun
+{
+
+  vars:
+      "bundles" slist => bundlesmatching(".*", "class_autorun");
+
+  methods:
+      "$(bundles)"
+        usebundle  => "$(bundles)",
+        ifvarclass => "$(bundles)";
+
+  reports:
+    services_class_autorun.verbose_mode::
+      "$(this.bundle): found bundle $(bundles) with tag 'class_autorun'";
+}
+

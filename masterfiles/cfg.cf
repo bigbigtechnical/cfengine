@@ -1,0 +1,58 @@
+bundle common cfg
+# This bundle is used to configure what we need for this machine.
+{
+
+  vars:
+    vm_classlist_loaded::
+      "json_$(vm_classlist)"
+        comment    => "JSON information for $(vm_classlist)",
+        data       => readjson("$(this.promise_dirname)/apps/$(vm_classlist).json", 100000),
+        handle     => "cfg_vars_json_$(vm_classlist)",
+        ifvarclass => "app_file_$(vm_classlist)",
+        meta       => { "app_merge" },
+        policy     => "free";
+
+      "tomerge"
+        comment => "List of JSON variables to merge.",
+        handle  => "cfg_vars_tomerge",
+        policy  => "free",
+        slist   => variablesmatching(".*", "app_merge");
+
+      "json"
+        comment => "Initial JSON load.",
+        data    => parsejson('[]'), 
+        handle  => "cfg_vars_json_init",
+        policy  => "free";
+
+      "json"
+        comment => "JSON load for $(tomerge)",
+        data    => mergedata(json, $(tomerge)),
+        handle  => "cfg_vars_json_merge_$(tomerge)",
+        policy  => "free";
+
+    vmclass_module_run.!vm_classlist_loaded::
+      "vm_classlist"
+        classes => default:if_ok("vm_classlist_loaded"),
+        comment => "List of classes from VM.",
+        handle  => "cfg_vars_vm_classlist",
+        policy  => "free",
+        slist   => classesmatching(".*", "vm_class");
+
+  classes:
+    vmclass_module_run::
+      "app_file_$(vm_classlist)"
+        comment    => "File exists for $(vm_classlist)",
+        expression => fileexists("$(this.promise_dirname)/apps/$(vm_classlist).json"),
+        handle     => "cfg_classes_app_$(vm_classlist)";
+
+    any::
+      "vmclass_module_run"
+        comment    => "VM Class module is run",
+        expression => usemodule("getvmclasses", ""),
+        handle     => "cfg_classes_vmclass_module";
+
+  reports:
+    vm_classlist_loaded::
+      "Loaded JSON information from $(vm_classlist)."
+        ifvarclass => canonify("app_file_$(vm_classlist)");
+}

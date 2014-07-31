@@ -1,0 +1,35 @@
+#!/bin/bash
+
+function vm_getvar {
+    VARVAL=$(VBoxControl --nologo guestproperty get $1)
+    if [ "${VARVAL}" != "No value set!" ]
+    then
+	    if [ "${VARVAL}" != "Value: " ]
+	    then
+	        echo ${VARVAL} | cut -d " " -f 1 --complement
+	    fi
+    fi
+
+}
+
+VMCLASSLIST=$(vm_getvar VMCLASSES)
+VMCLASSARR=( $VMCLASSLIST )
+
+if [[ ${#VMCLASSARR[@]} > 0 ]]
+then
+echo "^meta=vm_class"
+echo "+common"
+fi
+
+
+for VMCLASS in ${VMCLASSLIST}
+do
+    case "${VMCLASS}" in
+    "admin")
+        echo "+cfhub"
+    ;;
+    esac
+
+
+    echo "+${VMCLASS}"
+done
