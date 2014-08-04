@@ -1,3 +1,19 @@
+bundle common autorun_repo_common
+# @ignore
+{
+  vars:
+      "inputs"
+        slist => {
+                   "$(this.promise_dirname)/../../lib/3.6/common.cf"
+                 };
+}
+
+body file control
+# @ignore
+{
+      inputs => { @(autorun_repo_common.inputs) };
+}
+
 bundle agent repo
 # This bundle is used to add repositories to a machine.
 {

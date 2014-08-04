@@ -1,3 +1,20 @@
+bundle common autorun_packages_common
+# @ignore
+{
+  vars:
+      "inputs"
+        slist => {
+                   "$(this.promise_dirname)/../../lib/3.6/common.cf",
+                   "$(this.promise_dirname)/../../lib/3.6/packages.cf"
+                 };
+}
+
+body file control
+# @ignore
+{
+      inputs => { @(autorun_packages_common.inputs) };
+}
+
 bundle agent packages
 # This bundle is used to add packages to a machine.
 {

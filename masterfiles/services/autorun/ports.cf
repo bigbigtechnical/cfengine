@@ -1,3 +1,20 @@
+bundle common autorun_ports_common
+# @ignore
+{
+  vars:
+      "inputs"
+        slist => {
+                   "$(this.promise_dirname)/../../lib/3.6/common.cf",
+                   "$(this.promise_dirname)/../../lib/3.6/services.cf"
+                 };
+}
+
+body file control
+# @ignore
+{
+      inputs => { @(autorun_ports_common.inputs) };
+}
+
 bundle agent ports
 # This bundle is used to add ports to iptables.
 {
@@ -70,11 +87,12 @@ bundle agent ports
         template_method => "mustache",
         template_data   => parsejson('{"tcp": [$(tcp_str)], "udp": [$(udp_str)]}');
 
-  commands:
+  services:
     iptables_restart::
-      "/etc/init.d/iptables restart"
-        comment    => "Restart the iptables service.",
-        handle     => "ports_commands_restart";      
+      "iptables"
+        comment        => "Restart the iptables service.",
+        handle         => "ports_services_iptables_restart",
+        service_policy => "restart";
 
   reports:
     iptables_restart::

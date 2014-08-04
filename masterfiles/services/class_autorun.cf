@@ -18,4 +18,3 @@ bundle agent class_autorun
     services_class_autorun.verbose_mode::
       "$(this.bundle): found bundle $(bundles) with tag 'class_autorun'";
 }
-

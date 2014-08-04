@@ -1,3 +1,16 @@
+bundle common cfg_common
+# @ignore
+{
+  vars:
+      "inputs" slist => { "$(this.promise_dirname)/lib/3.6/common.cf" };
+}
+
+body file control
+# @ignore
+{
+      inputs => { @(cfg_common.inputs) };
+}
+
 bundle common cfg
 # This bundle is used to configure what we need for this machine.
 {
