@@ -15,12 +15,8 @@ function vm_getvar {
 VMCLASSLIST=$(vm_getvar VMCLASSES)
 VMCLASSARR=( $VMCLASSLIST )
 
-if [[ ${#VMCLASSARR[@]} > 0 ]]
-then
 echo "^meta=vm_class"
 echo "+common"
-fi
-
 
 for VMCLASS in ${VMCLASSLIST}
 do
@@ -29,7 +25,6 @@ do
         echo "+cfhub"
     ;;
     esac
-
 
     echo "+${VMCLASS}"
 done
